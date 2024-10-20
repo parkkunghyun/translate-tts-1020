@@ -1,101 +1,118 @@
-import Image from "next/image";
+"use client"
+
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import { useState } from 'react';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [text, setText] = useState("")
+  const [translateText, setTranslateText] = useState("sdf")
+  const [translateLan, setTranslateLan] = useState("en")
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+
+  const handleTranslate = async () => {
+    if (!text || !translateLan) {
+      console.error('Text or target language is missing');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,          // 번역할 텍스트
+          transLan: translateLan, // 타겟 언어 코드
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        const { translatedTextRes } = data;
+        setTranslateText(translatedTextRes);
+      } else {
+        console.error('Translation API error:', data.error, data.details);
+      }
+    } catch (error) {
+      console.error('Error during translation:', error);
+    }
+  };
+
+  const handleTextToSpeech = async () => {
+    if (!text) {
+      console.error('Text is missing for speech')
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: translateText,
+          lan: translateLan,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        const audioUrl = data.audioUrl;
+        const audio = new Audio(audioUrl);
+        audio.play();
+      } else {
+        console.error('Text-toSpeech API error', data.error, data.details);
+      }
+    }
+    catch (error) {
+      console.error('Error during Text to Speech')
+    }
+  }
+
+
+  return (
+    <div className="h-screen gap-4 bg-[#101827] flex flex-col items-center justify-center">
+      <h1 className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 ">Little PaPaGo</h1>
+
+      <div className="flex flex-col gap-4 mt-8 md:flex-row">
+        <div className="flex flex-col justify-center w-[400px] h-[400px]  border-4 border-white bg-white shadow-lg rounded-md">
+          <div className='flex justify-between p-2 border-b-2'>
+            <label htmlFor="language-select">PaPaGo</label>
+          </div>
+          <input value={text} onChange={(e) => setText(e.target.value)} type="text" className='flex-1 p-2 text-2xl focus:outline-none' placeholder='번역할 내용을 입럭하세요' />
+          <div className='flex justify-between p-2 border-t-2'>
+            <button onClick={handleTranslate}>번역하기</button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="flex flex-col justify-center w-[400px] h-[400px]  border-4 border-white bg-white shadow-lg rounded-md">
+          <div className='flex justify-between p-2 border-b-2'> 
+            <label htmlFor="language-select">언어 선택:</label>
+              <select
+                value={translateLan}
+                onChange={(e) => setTranslateLan(e.target.value)}
+                name="languages"
+                id="language-select">
+              <option value="ko">한국어</option>
+              <option value="en">영어</option>
+              <option value="zh">중국어</option>
+              <option value="ja">일본어</option>
+            </select>
+          </div>
+
+          <div className='flex items-center flex-1 p-2 text-2xl'>{translateText}</div>
+          <div className='flex justify-between p-2 border-t-2'>
+            <button onClick={() => handleTextToSpeech()}>
+              <VolumeUpIcon />
+            </button>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
